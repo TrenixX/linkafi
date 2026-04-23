@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LinkAfi — O encurtador de links feito para afiliados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0d14;
+      --surface: #111520;
+      --surface2: #161b2e;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --accent3: #f59e0b;
+      --text: #e8eaf0;
+      --muted: #7a8099;
+      --border: rgba(255,255,255,0.07);
+      --glow: 0 0 40px rgba(0,229,255,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    /* ─── GRID BG ─── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 5%;
+      background: rgba(10,13,20,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #0a0d14 !important;
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      transition: opacity 0.2s !important;
+    }
+
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 5% 5rem;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .hero-glow2 {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%);
+      top: 30%; left: 65%;
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid rgba(0,229,255,0.2);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.8rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .badge::before { content: '●'; font-size: 0.5rem; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      max-width: 820px;
+      margin-bottom: 1.5rem;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+    }
+
+    h1 em::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: 0.3;
+      border-radius: 2px;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+      animation: fadeDown 0.6s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeDown 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0d14;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 30px rgba(0,229,255,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(0,229,255,0.45);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      animation: fadeDown 0.6s 0.4s ease both;
+    }
+
+    .stat { text-align: center; }
+
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-num span { color: var(--accent); }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.2rem;
+    }
+
+    /* ─── DEMO CARD ─── */
+    .demo-section {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 5% 6rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 640px;
+      box-shadow: var(--glow);
+    }
+
+    .demo-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .demo-input-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .demo-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .demo-input:focus { border-color: var(--accent); }
+    .demo-input::placeholder { color: var(--muted); }
+
+    .demo-btn {
+      background: var(--accent);
+      color: #0a0d14;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .demo-btn:hover { opacity: 0.85; }
+
+    .demo-result {
+      margin-top: 1rem;
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.88rem;
+    }
+
+    .demo-result-link { color: var(--accent); font-weight: 500; }
+
+    .demo-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 100px;
+      font-weight: 500;
+    }
+
+    .tag-green { background: rgba(34,197,94,0.1); color: #4ade80; }
+    .tag-blue { background: rgba(0,229,255,0.1); color: var(--accent); }
+    .tag-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+    /* ─── FEATURES ─── */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 5%;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -1px;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      text-align: center;
+      max-width: 520px;
+      margin: 0 auto 4rem;
+      line-height: 1.7;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(0,229,255,0.2);
+      transform: translateY(-4px);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1.2rem;
+      display: block;
+    }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .feature-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps {
+      display: flex;
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .step {
+      flex: 1;
+      min-width: 200px;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.2rem;
+    }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-desc { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+
+    /* ─── INTEGRATIONS ─── */
+    .integrations {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .integration-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .integration-pill:hover { border-color: rgba(0,229,255,0.3); }
+
+    /* ─── PRICING ─── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 950px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      position: relative;
+      transition: transform 0.3s;
+    }
+
+    .pricing-card:hover { transform: translateY(-4px); }
+
+    .pricing-card.featured {
+      border-color: rgba(0,229,255,0.4);
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(0,229,255,0.04) 100%);
+      box-shadow: var(--glow);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #0a0d14;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 1rem;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .plan-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .plan-price {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2.8rem;
+      letter-spacing: -2px;
+      margin-bottom: 0.3rem;
+    }
+
+    .plan-price sup {
+      font-size: 1.2rem;
+      vertical-align: super;
+      letter-spacing: 0;
+    }
+
+    .plan-period { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+    .plan-features { list-style: none; margin-bottom: 2rem; }
+
+    .plan-features li {
+      padding: 0.5rem 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-features li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+
+    .plan-btn {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .plan-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    .plan-btn-primary { background: var(--accent); color: #0a0d14; }
+    .plan-btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border) !important; border: none; }
+
+    /* ─── CTA FINAL ─── */
+    .cta-section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 5%;
+      text-align: center;
+    }
+
+    .cta-box {
+      max-width: 700px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(124,58,237,0.1) 100%);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 24px;
+      padding: 4rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.15), transparent 70%);
+    }
+
+    .cta-box h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 1rem;
+    }
+
+    .cta-box p {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem 5%;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    footer span { color: var(--accent); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero-stats { gap: 1.5rem; }
+      .demo-input-row { flex-direction: column; }
+      .cta-box { padding: 2.5rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Link<span>Afi</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Recursos</a></li>
+    <li><a href="#como-funciona">Como funciona</a></li>
+    <li><a href="#precos">Preços</a></li>
+    <li><a href="#" class="nav-cta">Começar grátis</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="badge">✦ Feito para afiliados brasileiros</div>
+
+  <h1>Seus links de afiliado,<br/><em>inteligentes</em> e rastreados</h1>
+
+  <p class="hero-sub">
+    Encurte, organize e monitore seus links de Hotmart, Kiwify e Monetizze em um só lugar. Saiba exatamente de onde vêm seus cliques e conversões.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#" class="btn-primary">🚀 Criar conta grátis</a>
+    <a href="#como-funciona" class="btn-secondary">Ver como funciona →</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">20<span>k+</span></div>
+      <div class="stat-label">Links criados</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1.2<span>M</span></div>
+      <div class="stat-label">Cliques rastreados</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100<span>%</span></div>
+      <div class="stat-label">Focado em afiliados</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO CARD -->
+<section class="demo-section">
+  <div class="demo-card">
+    <div class="demo-label">⚡ Experimente agora — é grátis</div>
+    <div class="demo-input-row">
+      <input class="demo-input" type="text" placeholder="Cole seu link de afiliado aqui..." id="demoInput"/>
+      <button class="demo-btn" onclick="generateDemo()">Encurtar</button>
+    </div>
+    <div class="demo-result" id="demoResult" style="display:none">
+      <span class="demo-result-link" id="demoLink"></span>
+      <span style="color:var(--muted);font-size:0.8rem">📋 Copiar</span>
+    </div>
+    <div class="demo-tags">
+      <span class="tag tag-green">✓ Hotmart</span>
+      <span class="tag tag-blue">✓ Kiwify</span>
+      <span class="tag tag-purple">✓ Monetizze</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">Recursos</div>
+  <h2 class="section-title">Tudo que um afiliado precisa</h2>
+  <p class="section-sub">Ferramentas pensadas para quem vende infoprodutos e quer escalar com dados reais.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">📊</span>
+      <div class="feature-title">Analytics em tempo real</div>
+      <p class="feature-desc">Veja cliques, origem do tráfego, dispositivos e horários de pico. Tome decisões com dados, não com achismos.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🎯</span>
+      <div class="feature-title">Links por campanha</div>
+      <p class="feature-desc">Separe tráfego pago do orgânico. Saiba qual campanha converte mais e onde cortar gastos desnecessários.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔗</span>
+      <div class="feature-title">Links personalizados</div>
+      <p class="feature-desc">Crie links com seu nome ou do produto. Links bonitos passam mais confiança e aumentam o CTR.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📱</span>
+      <div class="feature-title">Alertas por WhatsApp</div>
+      <p class="feature-desc">Receba notificação quando seus links atingirem metas de cliques. Fique por dentro em tempo real.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🇧🇷</span>
+      <div class="feature-title">100% em português</div>
+      <p class="feature-desc">Interface simples, sem termos técnicos em inglês. Feito por brasileiro, para brasileiro.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📄</span>
+      <div class="feature-title">Relatórios exportáveis</div>
+      <p class="feature-desc">Exporte seus dados em PDF para compartilhar resultados com sua equipe ou mentorado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="como-funciona" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="section-label">Passo a passo</div>
+  <h2 class="section-title">Como funciona</h2>
+  <p class="section-sub">Em menos de 2 minutos você já está rastreando seus links.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">Crie sua conta</div>
+      <p class="step-desc">Cadastro gratuito, sem cartão de crédito. Pronto em segundos.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">Cole seu link</div>
+      <p class="step-desc">Qualquer link de afiliado — Hotmart, Kiwify, Monetizze ou outro.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">Compartilhe</div>
+      <p class="step-desc">Use o link curto no Instagram, YouTube, WhatsApp ou onde quiser.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-title">Acompanhe</div>
+      <p class="step-desc">Veja os dados em tempo real e otimize suas campanhas com confiança.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<section class="section">
+  <div class="section-label">Integrações</div>
+  <h2 class="section-title">Funciona com as plataformas que você já usa</h2>
+  <p class="section-sub">Compatível com as maiores plataformas de infoprodutos do Brasil.</p>
+
+  <div class="integrations">
+    <div class="integration-pill">🟠 Hotmart</div>
+    <div class="integration-pill">🟣 Kiwify</div>
+    <div class="integration-pill">🔵 Monetizze</div>
+    <div class="integration-pill">🟢 Eduzz</div>
+    <div class="integration-pill">⚫ Braip</div>
+    <div class="integration-pill">📘 Facebook Ads</div>
+    <div class="integration-pill">🔴 Google Ads</div>
+    <div class="integration-pill">📸 Instagram</div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="precos" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="section-label">Planos</div>
+  <h2 class="section-title">Simples e acessível</h2>
+  <p class="section-sub">Comece grátis. Escale quando precisar.</p>
+
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="plan-name">Gratuito</div>
+      <div class="plan-price">R$<sup></sup>0</div>
+      <div class="plan-period">para sempre</div>
+      <ul class="plan-features">
+        <li>Até 20 links ativos</li>
+        <li>Analytics básico</li>
+        <li>Links personalizados</li>
+        <li>Suporte por e-mail</li>
+      </ul>
+      <button class="plan-btn plan-btn-outline" style="border: 1px solid var(--border);">Começar grátis</button>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="featured-badge">⚡ Mais popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price"><sup>R$</sup>29</div>
+      <div class="plan-period">por mês</div>
+      <ul class="plan-features">
+        <li>Links ilimitados</li>
+        <li>Analytics completo</li>
+        <li>Links por campanha</li>
+        <li>Alertas no WhatsApp</li>
+        <li>Exportar relatórios PDF</li>
+        <li>Suporte prioritário</li>
+      </ul>
+      <button class="plan-btn plan-btn-primary">Assinar Pro →</button>
+    </div>
+
+    <div class="pricing-card">
+      <div class="plan-name">Agência</div>
+      <div class="plan-price"><sup>R$</sup>79</div>
+      <div class="plan-period">por mês</div>
+      <ul class="plan-features">
+        <li>Tudo do Pro</li>
+        <li>Múltiplos usuários</li>
+        <li>Painel por cliente</li>
+        <li>Relatórios com logo</li>
+        <li>API de integração</li>
+        <li>Gerente de conta</li>
+      </ul>
+      <button class="plan-btn plan-btn-outline" style="border: 1px solid var(--border);">Falar com vendas</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <div class="cta-box">
+    <h2>Pronto para rastrear cada clique?</h2>
+    <p>Junte-se a centenas de afiliados que já usam o LinkAfi para vender mais com inteligência.</p>
+    <a href="#" class="btn-primary" style="font-size:1.05rem; padding: 1rem 2.5rem;">🚀 Criar conta grátis agora</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 <span>LinkAfi</span> — Feito com 💙 para afiliados brasileiros</p>
+</footer>
+
+<script>
+  function generateDemo() {
+    const input = document.getElementById('demoInput');
+    const result = document.getElementById('demoResult');
+    const link = document.getElementById('demoLink');
+
+    if (!input.value.trim()) {
+      input.style.borderColor = 'rgba(239,68,68,0.5)';
+      setTimeout(() => input.style.borderColor = '', 1000);
+      return;
+    }
+
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+
+    link.textContent = `lnkafi.co/${code}`;
+    result.style.display = 'flex';
+    result.style.animation = 'fadeDown 0.3s ease';
+  }
+
+  document.getElementById('demoInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') generateDemo();
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+
+</body>
+</html>
