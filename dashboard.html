@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LinkAfi — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080b12;
+      --surface: #0e1118;
+      --surface2: #141824;
+      --surface3: #1a2030;
+      --accent: #00e5ff;
+      --accent-dim: rgba(0,229,255,0.12);
+      --accent2: #7c3aed;
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245,158,11,0.12);
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --muted2: #94a3b8;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --sidebar-w: 240px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════
+       SIDEBAR
+    ══════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: var(--text);
+      text-decoration: none;
+      display: block;
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .sidebar-section {
+      padding: 1.2rem 1rem 0.5rem;
+    }
+
+    .sidebar-section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 0 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      color: var(--muted2);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 100px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-card:hover { background: var(--surface2); }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+
+    .user-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-plan {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* ══════════════════════════════
+       MAIN
+    ══════════════════════════════ */
+    .main {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(8,11,18,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .page-sub { font-size: 0.75rem; color: var(--muted); }
+
+    .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+
+    .topbar-search {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .topbar-search:hover { border-color: var(--border2); }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      color: var(--muted2);
+      position: relative;
+    }
+
+    .icon-btn:hover { border-color: var(--border2); color: var(--text); }
+
+    .notif-dot {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ─── CONTENT ─── */
+    .content { padding: 2rem; flex: 1; }
+
+    /* ─── NEW LINK BTN ─── */
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+
+    .section-heading {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .btn-new {
+      background: var(--accent);
+      color: #080b12;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.55rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 0 20px rgba(0,229,255,0.2);
+    }
+
+    .btn-new:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ─── METRIC CARDS ─── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .metric-card:nth-child(1) { animation-delay: 0.05s; }
+    .metric-card:nth-child(2) { animation-delay: 0.1s; }
+    .metric-card:nth-child(3) { animation-delay: 0.15s; }
+    .metric-card:nth-child(4) { animation-delay: 0.2s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .metric-card.c-blue::after { background: var(--accent); }
+    .metric-card.c-green::after { background: var(--green); }
+    .metric-card.c-amber::after { background: var(--amber); }
+    .metric-card.c-purple::after { background: #a78bfa; }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .metric-icon.c-blue { background: var(--accent-dim); }
+    .metric-icon.c-green { background: var(--green-dim); }
+    .metric-icon.c-amber { background: var(--amber-dim); }
+    .metric-icon.c-purple { background: rgba(167,139,250,0.12); }
+
+    .metric-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .metric-change {
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .metric-change.up { color: var(--green); }
+    .metric-change.down { color: var(--red); }
+    .metric-change.neutral { color: var(--muted); }
+
+    /* ─── CHART + TOP LINKS ─── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      animation: fadeUp 0.4s 0.25s ease both;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 200px;
+    }
+
+    /* ─── TOP SOURCES ─── */
+    .source-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .source-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .source-info { flex: 1; min-width: 0; }
+
+    .source-name {
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+    }
+
+    .source-bar-wrap {
+      height: 4px;
+      background: var(--surface3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .source-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: width 1s ease;
+    }
+
+    .source-pct {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted2);
+      flex-shrink: 0;
+    }
+
+    /* ─── LINKS TABLE ─── */
+    .links-section { animation: fadeUp 0.4s 0.3s ease both; }
+
+    .links-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.3rem;
+      background: var(--surface2);
+      padding: 0.2rem;
+      border-radius: 8px;
+    }
+
+    .filter-tab {
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      border: none;
+      background: none;
+    }
+
+    .filter-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .links-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-head {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr 80px;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .th {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+
+    .table-body { }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr 80px;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: var(--surface2); }
+
+    .link-info { display: flex; flex-direction: column; gap: 0.2rem; }
+
+    .link-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .link-original {
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 260px;
+    }
+
+    .link-short {
+      font-size: 0.82rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .td { font-size: 0.82rem; color: var(--muted2); }
+
+    .td-clicks {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 100px;
+    }
+
+    .status-badge.active { background: var(--green-dim); color: var(--green); }
+    .status-badge.paused { background: var(--amber-dim); color: var(--amber); }
+    .status-badge::before { content: '●'; font-size: 0.45rem; }
+
+    .row-actions {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: flex-end;
+    }
+
+    .row-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .row-btn:hover {
+      background: var(--surface2);
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════
+       MODAL
+    ══════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      padding: 2rem;
+      transform: translateY(16px);
+      transition: transform 0.25s;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+    }
+
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+    .m-field { margin-bottom: 1rem; }
+
+    .m-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.4rem;
+    }
+
+    .m-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .m-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+    }
+
+    .m-input::placeholder { color: var(--muted); }
+
+    .m-input-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .m-input-group:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+    }
+
+    .m-input-prefix {
+      padding: 0.75rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .m-input-group input {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 0.75rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .m-input-group input::placeholder { color: var(--muted); }
+
+    .m-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+    }
+
+    .m-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .modal-footer {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      color: var(--muted2);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+
+    .btn-create {
+      flex: 2;
+      background: var(--accent);
+      color: #080b12;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 0 20px rgba(0,229,255,0.2);
+    }
+
+    .btn-create:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ─── SUCCESS TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { font-size: 1.1rem; }
+    .toast-link { color: var(--accent); font-weight: 600; }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      display: none;
+    }
+
+    .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .empty-title { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.5rem; }
+    .empty-sub { color: var(--muted); font-size: 0.85rem; }
+
+    /* ─── PLAN BANNER ─── */
+    .plan-banner {
+      background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(0,229,255,0.08));
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      gap: 1rem;
+    }
+
+    .plan-banner-left { display: flex; align-items: center; gap: 0.75rem; }
+    .plan-banner-icon { font-size: 1.2rem; }
+
+    .plan-banner-text { font-size: 0.82rem; }
+    .plan-banner-text strong { color: var(--text); }
+    .plan-banner-text span { color: var(--muted); }
+
+    .plan-progress {
+      width: 120px;
+      height: 4px;
+      background: var(--surface3);
+      border-radius: 2px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .plan-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 60%;
+    }
+
+    .btn-upgrade {
+      background: rgba(124,58,237,0.2);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 6px;
+      color: #a78bfa;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-upgrade:hover { background: rgba(124,58,237,0.3); }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .table-head, .table-row { grid-template-columns: 2fr 1fr 60px; }
+      .th:nth-child(3), .th:nth-child(4), .th:nth-child(5),
+      .table-row > *:nth-child(3),
+      .table-row > *:nth-child(4),
+      .table-row > *:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html" class="logo-text">Link<span>Afi</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Principal</div>
+    <a class="nav-item active" href="#">
+      <span class="nav-icon">📊</span> Painel
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🔗</span> Meus Links
+      <span class="nav-badge">12</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📈</span> Analytics
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🎯</span> Campanhas
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Conta</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⚙️</span> Configurações
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">💳</span> Plano
+    </a>
+    <a class="nav-item" href="login.html">
+      <span class="nav-icon">🚪</span> Sair
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar">JS</div>
+      <div class="user-info">
+        <div class="user-name">João Silva</div>
+        <div class="user-plan">Plano Gratuito</div>
+      </div>
+      <span style="color:var(--muted);font-size:0.8rem">⚙</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Painel</div>
+      <div class="page-sub">Bem-vindo de volta, João 👋</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-search">
+        🔍 <span>Buscar links...</span>
+      </div>
+      <div class="icon-btn">
+        🔔
+        <div class="notif-dot"></div>
+      </div>
+      <div class="avatar" style="width:34px;height:34px;font-size:0.8rem;cursor:pointer">JS</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PLAN BANNER -->
+    <div class="plan-banner">
+      <div class="plan-banner-left">
+        <div class="plan-banner-icon">⚡</div>
+        <div class="plan-banner-text">
+          <strong>12 de 20 links</strong> utilizados no plano gratuito
+          <span> — Faça upgrade para links ilimitados</span>
+        </div>
+      </div>
+      <div class="plan-progress">
+        <div class="plan-progress-fill"></div>
+      </div>
+      <button class="btn-upgrade" onclick="window.location.href='index.html#precos'">Fazer upgrade →</button>
+    </div>
+
+    <!-- HEADER -->
+    <div class="content-header">
+      <div>
+        <div class="section-heading">Visão Geral</div>
+      </div>
+      <button class="btn-new" onclick="openModal()">+ Novo link</button>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics">
+      <div class="metric-card c-blue">
+        <div class="metric-top">
+          <div class="metric-label">Total de Cliques</div>
+          <div class="metric-icon c-blue">📊</div>
+        </div>
+        <div class="metric-value" id="totalClicks">0</div>
+        <div class="metric-change up">↑ 18% vs semana passada</div>
+      </div>
+      <div class="metric-card c-green">
+        <div class="metric-top">
+          <div class="metric-label">Links Ativos</div>
+          <div class="metric-icon c-green">🔗</div>
+        </div>
+        <div class="metric-value" id="activeLinks">0</div>
+        <div class="metric-change neutral">de 20 disponíveis</div>
+      </div>
+      <div class="metric-card c-amber">
+        <div class="metric-top">
+          <div class="metric-label">Cliques Hoje</div>
+          <div class="metric-icon c-amber">⚡</div>
+        </div>
+        <div class="metric-value" id="todayClicks">0</div>
+        <div class="metric-change up">↑ 24% vs ontem</div>
+      </div>
+      <div class="metric-card c-purple">
+        <div class="metric-top">
+          <div class="metric-label">Top Link</div>
+          <div class="metric-icon c-purple">🏆</div>
+        </div>
+        <div class="metric-value" style="font-size:1.1rem;letter-spacing:-0.5px">curso-ia</div>
+        <div class="metric-change neutral">843 cliques totais</div>
+      </div>
+    </div>
+
+    <!-- CHART + SOURCES -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Cliques nos últimos 7 dias</div>
+        <div class="card-sub">Todos os links combinados</div>
+        <div class="chart-wrap">
+          <canvas id="clicksChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Origem do Tráfego</div>
+        <div class="card-sub">De onde vêm seus cliques</div>
+        <div class="source-list">
+          <div class="source-item">
+            <div class="source-icon">📸</div>
+            <div class="source-info">
+              <div class="source-name">Instagram</div>
+              <div class="source-bar-wrap">
+                <div class="source-bar" style="width:72%;background:var(--accent)"></div>
+              </div>
+            </div>
+            <div class="source-pct">72%</div>
+          </div>
+          <div class="source-item">
+            <div class="source-icon">💬</div>
+            <div class="source-info">
+              <div class="source-name">WhatsApp</div>
+              <div class="source-bar-wrap">
+                <div class="source-bar" style="width:15%;background:#22c55e"></div>
+              </div>
+            </div>
+            <div class="source-pct">15%</div>
+          </div>
+          <div class="source-item">
+            <div class="source-icon">▶️</div>
+            <div class="source-info">
+              <div class="source-name">YouTube</div>
+              <div class="source-bar-wrap">
+                <div class="source-bar" style="width:8%;background:#f59e0b"></div>
+              </div>
+            </div>
+            <div class="source-pct">8%</div>
+          </div>
+          <div class="source-item">
+            <div class="source-icon">🔵</div>
+            <div class="source-info">
+              <div class="source-name">Facebook</div>
+              <div class="source-bar-wrap">
+                <div class="source-bar" style="width:5%;background:#a78bfa"></div>
+              </div>
+            </div>
+            <div class="source-pct">5%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINKS TABLE -->
+    <div class="links-section">
+      <div class="links-header">
+        <div class="section-heading">Meus Links</div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterLinks('todos', this)">Todos</button>
+          <button class="filter-tab" onclick="filterLinks('ativos', this)">Ativos</button>
+          <button class="filter-tab" onclick="filterLinks('pausados', this)">Pausados</button>
+        </div>
+      </div>
+
+      <div class="links-table">
+        <div class="table-head">
+          <div class="th">Link</div>
+          <div class="th">Curto</div>
+          <div class="th">Cliques</div>
+          <div class="th">Campanha</div>
+          <div class="th">Status</div>
+          <div class="th" style="text-align:right">Ações</div>
+        </div>
+        <div class="table-body" id="tableBody"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔗</div>
+          <div class="empty-title">Nenhum link encontrado</div>
+          <div class="empty-sub">Crie seu primeiro link clicando em "Novo link"</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✨ Criar novo link</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="m-field">
+      <label class="m-label">URL de destino *</label>
+      <input class="m-input" type="url" id="destUrl" placeholder="https://hotmart.com/product/seu-produto/pay/..."/>
+    </div>
+
+    <div class="m-field">
+      <label class="m-label">Slug personalizado</label>
+      <div class="m-input-group">
+        <div class="m-input-prefix">lnkafi.co/</div>
+        <input type="text" id="slugInput" placeholder="meu-curso" maxlength="30"/>
+      </div>
+    </div>
+
+    <div class="m-row">
+      <div class="m-field">
+        <label class="m-label">Campanha</label>
+        <select class="m-select" id="campaignSelect">
+          <option value="">Sem campanha</option>
+          <option>Tráfego pago</option>
+          <option>Instagram orgânico</option>
+          <option>WhatsApp</option>
+          <option>YouTube</option>
+          <option>E-mail marketing</option>
+        </select>
+      </div>
+      <div class="m-field">
+        <label class="m-label">Plataforma</label>
+        <select class="m-select" id="platformSelect">
+          <option value="">Outra</option>
+          <option>Hotmart</option>
+          <option>Kiwify</option>
+          <option>Monetizze</option>
+          <option>Eduzz</option>
+          <option>Braip</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="m-field">
+      <label class="m-label">Nome do link (para identificação)</label>
+      <input class="m-input" type="text" id="linkName" placeholder="Ex: Curso de IA — Stories"/>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-create" onclick="createLink()">🔗 Criar link</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <div>
+    Link criado: <span class="toast-link" id="toastLink"></span>
+  </div>
+</div>
+
+<script>
+  // ─── DATA ───
+  let links = [
+    { name: 'Curso de IA Completo', url: 'https://hotmart.com/product/curso-ia/pay/abc123', slug: 'curso-ia', clicks: 843, campaign: 'Tráfego pago', platform: 'Hotmart', status: 'active', date: 'Há 5 dias' },
+    { name: 'Ebook Marketing Digital', url: 'https://kiwify.app/ebook-mkt', slug: 'ebook-mkt', clicks: 412, campaign: 'Instagram orgânico', platform: 'Kiwify', status: 'active', date: 'Há 8 dias' },
+    { name: 'Mentoria 1:1 — Bio', url: 'https://hotmart.com/product/mentoria/pay/xyz789', slug: 'mentoria-vip', clicks: 290, campaign: 'WhatsApp', platform: 'Hotmart', status: 'active', date: 'Há 12 dias' },
+    { name: 'Pacote Tráfego Pago', url: 'https://monetizze.com.br/r/pacote-trafego', slug: 'trafego-pro', clicks: 178, campaign: 'YouTube', platform: 'Monetizze', status: 'paused', date: 'Há 15 dias' },
+    { name: 'Afiliado — Produto X', url: 'https://hotmart.com/product/x/pay/def456', slug: 'prod-x', clicks: 95, campaign: 'E-mail marketing', platform: 'Hotmart', status: 'active', date: 'Há 20 dias' },
+  ];
+
+  let currentFilter = 'todos';
+
+  // ─── ANIMATE NUMBERS ───
+  function animateNumber(id, target) {
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const el = document.getElementById(id);
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current.toLocaleString('pt-BR');
+      if (current >= target) clearInterval(interval);
+    }, 30);
+  }
+
+  animateNumber('totalClicks', 1818);
+  animateNumber('activeLinks', 12);
+  animateNumber('todayClicks', 247);
+
+  // ─── CHART ───
+  const ctx = document.getElementById('clicksChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, 'rgba(0,229,255,0.2)');
+  gradient.addColorStop(1, 'rgba(0,229,255,0)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+      datasets: [{
+        data: [180, 220, 195, 310, 275, 340, 298],
+        borderColor: '#00e5ff',
+        borderWidth: 2,
+        fill: true,
+        backgroundColor: gradient,
+        tension: 0.4,
+        pointBackgroundColor: '#00e5ff',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { family: 'DM Sans', size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { family: 'DM Sans', size: 11 } } }
+      }
+    }
+  });
+
+  // ─── RENDER TABLE ───
+  function renderTable(filter) {
+    const body = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
+    const filtered = filter === 'todos' ? links
+      : filter === 'ativos' ? links.filter(l => l.status === 'active')
+      : links.filter(l => l.status === 'paused');
+
+    if (filtered.length === 0) {
+      body.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    body.innerHTML = filtered.map((l, i) => `
+      <div class="table-row" style="animation: fadeUp 0.3s ${i * 0.05}s ease both">
+        <div class="link-info">
+          <div class="link-name">${l.name}</div>
+          <div class="link-original">${l.url}</div>
+        </div>
+        <div class="link-short">lnkafi.co/${l.slug}</div>
+        <div class="td td-clicks">${l.clicks.toLocaleString('pt-BR')}</div>
+        <div class="td">${l.campaign || '—'}</div>
+        <div class="td">
+          <span class="status-badge ${l.status}">${l.status === 'active' ? 'Ativo' : 'Pausado'}</span>
+        </div>
+        <div class="row-actions">
+          <button class="row-btn" title="Copiar" onclick="copyLink('${l.slug}', event)">📋</button>
+          <button class="row-btn" title="Analytics">📊</button>
+          <button class="row-btn" title="Editar">✏️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderTable('todos');
+
+  function filterLinks(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable(filter);
+  }
+
+  // ─── COPY ───
+  function copyLink(slug, e) {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(`https://lnkafi.co/${slug}`);
+    showToast(`lnkafi.co/${slug}`, '📋 Link copiado!');
+  }
+
+  // ─── MODAL ───
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.getElementById('destUrl').value = '';
+    document.getElementById('slugInput').value = '';
+    document.getElementById('linkName').value = '';
+    document.getElementById('campaignSelect').value = '';
+    document.getElementById('platformSelect').value = '';
+  }
+
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function createLink() {
+    const url = document.getElementById('destUrl').value.trim();
+    const slug = document.getElementById('slugInput').value.trim();
+    const name = document.getElementById('linkName').value.trim();
+    const campaign = document.getElementById('campaignSelect').value;
+    const platform = document.getElementById('platformSelect').value;
+
+    if (!url) {
+      document.getElementById('destUrl').style.borderColor = '#ef4444';
+      document.getElementById('destUrl').focus();
+      return;
+    }
+
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const finalSlug = slug || Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+
+    const newLink = {
+      name: name || 'Novo link',
+      url,
+      slug: finalSlug,
+      clicks: 0,
+      campaign: campaign || '',
+      platform: platform || '',
+      status: 'active',
+      date: 'Agora mesmo'
+    };
+
+    links.unshift(newLink);
+    renderTable(currentFilter);
+    closeModal();
+    showToast(`lnkafi.co/${finalSlug}`);
+
+    // Update counter
+    const activeCount = links.filter(l => l.status === 'active').length;
+    document.getElementById('activeLinks').textContent = activeCount;
+  }
+
+  // ─── TOAST ───
+  function showToast(link, msg) {
+    const toast = document.getElementById('toast');
+    const toastLink = document.getElementById('toastLink');
+    toastLink.textContent = link;
+    if (msg) toast.querySelector('div').innerHTML = msg + ' <span class="toast-link">' + link + '</span>';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+</body>
+</html>
