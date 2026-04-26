@@ -456,18 +456,44 @@
     document.getElementById('loginView').style.display = 'block';
   }
 
-  function sendReset() {
+  async function sendReset() {
     const email = document.getElementById('resetEmail');
     const error = document.getElementById('resetEmailError');
+    const btn = document.querySelector('#forgotForm .btn-submit');
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
       email.classList.add('error');
       error.classList.add('show');
       return;
     }
+
     email.classList.remove('error');
     error.classList.remove('show');
-    document.getElementById('forgotForm').style.display = 'none';
-    document.getElementById('sentScreen').style.display = 'block';
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando...';
+
+    try {
+      const res = await fetch('https://xeroztmtgwcfsnxjbvnz.supabase.co/auth/v1/recover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_0lOYgHY250KjDSE45BKiVA_t3GiUIBE',
+        },
+        body: JSON.stringify({
+          email: email.value.trim(),
+          gotrue_meta_security: {},
+        }),
+      });
+
+      // Supabase retorna 200 mesmo se o e-mail não existir (por segurança)
+      document.getElementById('forgotForm').style.display = 'none';
+      document.getElementById('sentScreen').style.display = 'block';
+
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Enviar link de recuperação';
+      alert('Erro de conexão. Tente novamente.');
+    }
   }
 
   // Login form
