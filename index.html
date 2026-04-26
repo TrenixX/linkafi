@@ -945,6 +945,17 @@
     if (e.key === 'Enter') generateDemo();
   });
 
+  // Detecta token de recuperação de senha e redireciona
+  (function() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const type = params.get('type');
+    const access_token = params.get('access_token');
+    if (type === 'recovery' && access_token) {
+      window.location.href = 'reset-senha.html' + window.location.hash;
+    }
+  })();
+
   // Smooth scroll
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
