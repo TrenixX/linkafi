@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LinkAfi — Redefinir senha</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0d14; --surface: #111520; --surface2: #161b2e;
+      --accent: #00e5ff; --text: #e8eaf0; --muted: #7a8099;
+      --border: rgba(255,255,255,0.07); --danger: #ef4444; --success: #22c55e;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; padding: 2rem 1rem; position: relative;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px; pointer-events: none;
+    }
+    .glow {
+      position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .card {
+      position: relative; z-index: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.4);
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card-header { text-align: center; margin-bottom: 2rem; }
+    .logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem;
+      color: var(--text); text-decoration: none; display: inline-block; margin-bottom: 1.5rem;
+    }
+    .logo span { color: var(--accent); }
+    .card-header h1 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.4rem; }
+    .card-header p { color: var(--muted); font-size: 0.9rem; }
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .input-wrap { position: relative; }
+    .input-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); font-size: 0.95rem; pointer-events: none; }
+    .toggle-btn {
+      position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 0.9rem;
+      color: var(--muted); padding: 0; transition: color 0.2s;
+    }
+    .toggle-btn:hover { color: var(--text); }
+    input[type="password"], input[type="text"] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.8rem 2.5rem 0.8rem 2.5rem;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.08); }
+    input.error { border-color: var(--danger) !important; }
+    input::placeholder { color: var(--muted); }
+    .field-error { font-size: 0.75rem; color: var(--danger); margin-top: 0.35rem; display: none; }
+    .field-error.show { display: block; }
+    .strength-bar { display: flex; gap: 4px; margin-top: 0.5rem; }
+    .strength-seg { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+    .strength-label { font-size: 0.72rem; margin-top: 0.3rem; color: var(--muted); }
+    .btn-submit {
+      width: 100%; background: var(--accent); color: #0a0d14;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem;
+      padding: 0.9rem; border-radius: 10px; border: none; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 25px rgba(0,229,255,0.25);
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.6; pointer-events: none; }
+
+    /* SUCCESS */
+    .success-screen { text-align: center; padding: 1rem 0; display: none; }
+    .success-icon { font-size: 3.5rem; margin-bottom: 1rem; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .success-screen h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .success-screen p { color: var(--muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
+
+    /* ERROR */
+    .alert {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.82rem;
+      color: #fca5a5; margin-bottom: 1rem; display: none; align-items: center; gap: 0.5rem;
+    }
+    .alert.show { display: flex; }
+  </style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<div class="card">
+
+  <!-- FORM VIEW -->
+  <div id="formView">
+    <div class="card-header">
+      <a href="index.html" class="logo">Link<span>Afi</span></a>
+      <h1>Redefinir senha</h1>
+      <p>Digite sua nova senha abaixo.</p>
+    </div>
+
+    <div class="alert" id="errorAlert">⚠️ <span id="alertMsg">Erro ao redefinir senha.</span></div>
+
+    <div class="field">
+      <label>Nova senha</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="newPassword" placeholder="Mínimo 8 caracteres" style="padding-right:2.5rem;"/>
+        <button type="button" class="toggle-btn" onclick="togglePass('newPassword', 'toggleNew')" id="toggleNew">👁️</button>
+      </div>
+      <div class="strength-bar">
+        <div class="strength-seg" id="s1"></div>
+        <div class="strength-seg" id="s2"></div>
+        <div class="strength-seg" id="s3"></div>
+        <div class="strength-seg" id="s4"></div>
+      </div>
+      <div class="strength-label" id="strengthLabel"></div>
+      <div class="field-error" id="newPasswordError">Mínimo 8 caracteres</div>
+    </div>
+
+    <div class="field">
+      <label>Confirmar nova senha</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="confirmPassword" placeholder="Repita a nova senha" style="padding-right:2.5rem;"/>
+        <button type="button" class="toggle-btn" onclick="togglePass('confirmPassword', 'toggleConfirm')" id="toggleConfirm">👁️</button>
+      </div>
+      <div class="field-error" id="confirmPasswordError">As senhas não coincidem</div>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="resetPassword()">
+      <span id="btnText">🔒 Redefinir senha</span>
+    </button>
+  </div>
+
+  <!-- SUCCESS VIEW -->
+  <div class="success-screen" id="successView">
+    <div class="success-icon">✅</div>
+    <h2>Senha redefinida!</h2>
+    <p>Sua senha foi atualizada com sucesso. Faça login com sua nova senha.</p>
+    <button class="btn-submit" onclick="window.location.href='login.html'">
+      Ir para o login →
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://xeroztmtgwcfsnxjbvnz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_0lOYgHY250KjDSE45BKiVA_t3GiUIBE';
+
+  // Extrai token de acesso da URL (Supabase envia como hash fragment)
+  function getTokenFromUrl() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return {
+      access_token: params.get('access_token'),
+      type: params.get('type'),
+    };
+  }
+
+  const { access_token, type } = getTokenFromUrl();
+
+  // Se não houver token válido, redireciona
+  if (!access_token || type !== 'recovery') {
+    document.getElementById('errorAlert').classList.add('show');
+    document.getElementById('alertMsg').textContent = 'Link inválido ou expirado. Solicite um novo link de recuperação.';
+    document.getElementById('submitBtn').disabled = true;
+  }
+
+  // Toggle senha
+  const visibility = {};
+  function togglePass(inputId, btnId) {
+    visibility[inputId] = !visibility[inputId];
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    input.type = visibility[inputId] ? 'text' : 'password';
+    btn.textContent = visibility[inputId] ? '🙈' : '👁️';
+  }
+
+  // Força da senha
+  document.getElementById('newPassword').addEventListener('input', function() {
+    const val = this.value;
+    const segs = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3'), document.getElementById('s4')];
+    const label = document.getElementById('strengthLabel');
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const colors = ['', '#ef4444', '#f59e0b', '#22c55e', '#00e5ff'];
+    const labels = ['', 'Fraca', 'Média', 'Boa', 'Forte'];
+    segs.forEach((s, i) => { s.style.background = i < score ? colors[score] : 'var(--border)'; });
+    label.textContent = val.length > 0 ? `Senha ${labels[score]}` : '';
+    label.style.color = colors[score] || 'var(--muted)';
+  });
+
+  async function resetPassword() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const newPasswordError = document.getElementById('newPasswordError');
+    const confirmPasswordError = document.getElementById('confirmPasswordError');
+    let valid = true;
+
+    // Valida campos
+    if (newPassword.length < 8) {
+      document.getElementById('newPassword').classList.add('error');
+      newPasswordError.classList.add('show');
+      valid = false;
+    } else {
+      document.getElementById('newPassword').classList.remove('error');
+      newPasswordError.classList.remove('show');
+    }
+
+    if (confirmPassword !== newPassword || confirmPassword === '') {
+      document.getElementById('confirmPassword').classList.add('error');
+      confirmPasswordError.classList.add('show');
+      valid = false;
+    } else {
+      document.getElementById('confirmPassword').classList.remove('error');
+      confirmPasswordError.classList.remove('show');
+    }
+
+    if (!valid) return;
+
+    const btn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    btn.disabled = true;
+    btnText.textContent = '⏳ Salvando...';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${access_token}`,
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        document.getElementById('errorAlert').classList.add('show');
+        document.getElementById('alertMsg').textContent = data.msg || 'Erro ao redefinir senha. Tente novamente.';
+        btn.disabled = false;
+        btnText.textContent = '🔒 Redefinir senha';
+        return;
+      }
+
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+
+    } catch (e) {
+      document.getElementById('errorAlert').classList.add('show');
+      document.getElementById('alertMsg').textContent = 'Erro de conexão. Tente novamente.';
+      btn.disabled = false;
+      btnText.textContent = '🔒 Redefinir senha';
+    }
+  }
+</script>
+</body>
+</html>
