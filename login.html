@@ -471,7 +471,7 @@
   }
 
   // Login form
-  document.getElementById('loginForm').addEventListener('submit', function(e) {
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     let valid = true;
 
@@ -508,14 +508,42 @@
     btn.classList.add('loading');
     btnText.textContent = '⏳ Verificando...';
 
-    setTimeout(() => {
-      // Simulate wrong credentials for demo
+    try {
+      const res = await fetch('https://xeroztmtgwcfsnxjbvnz.supabase.co/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_0lOYgHY250KjDSE45BKiVA_t3GiUIBE',
+        },
+        body: JSON.stringify({
+          email: email.value.trim(),
+          password: password.value,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        btn.classList.remove('loading');
+        btnText.textContent = 'Entrar na minha conta';
+        alert.classList.add('show');
+        document.getElementById('alertMsg').textContent = 'E-mail ou senha incorretos. Tente novamente.';
+        email.classList.add('error');
+        password.classList.add('error');
+        return;
+      }
+
+      // Salva sessão e redireciona
+      localStorage.setItem('linkafi_token', data.access_token);
+      localStorage.setItem('linkafi_user', JSON.stringify(data.user));
+      window.location.href = 'dashboard.html';
+
+    } catch (e) {
       btn.classList.remove('loading');
       btnText.textContent = 'Entrar na minha conta';
       alert.classList.add('show');
-      email.classList.add('error');
-      password.classList.add('error');
-    }, 1500);
+      document.getElementById('alertMsg').textContent = 'Erro de conexão. Tente novamente.';
+    }
   });
 
   ['email','password'].forEach(id => {

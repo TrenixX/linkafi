@@ -518,7 +518,7 @@
   });
 
   // Form validation
-  document.getElementById('registerForm').addEventListener('submit', function(e) {
+  document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     let valid = true;
 
@@ -569,16 +569,51 @@
 
     if (!valid) return;
 
-    // Simulate loading
     const btn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
     btn.classList.add('loading');
     btnText.textContent = '⏳ Criando sua conta...';
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('https://xeroztmtgwcfsnxjbvnz.supabase.co/auth/v1/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_0lOYgHY250KjDSE45BKiVA_t3GiUIBE',
+        },
+        body: JSON.stringify({
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+          data: {
+            first_name: document.getElementById('firstName').value.trim(),
+            last_name: document.getElementById('lastName').value.trim(),
+          }
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        btn.classList.remove('loading');
+        btnText.textContent = '🚀 Criar minha conta';
+        if (data.msg?.includes('already') || data.code === 'user_already_exists') {
+          document.getElementById('email').classList.add('error');
+          document.getElementById('emailError').textContent = 'Este e-mail já está cadastrado.';
+          document.getElementById('emailError').classList.add('show');
+        } else {
+          alert(data.msg || data.error_description || 'Erro ao criar conta. Tente novamente.');
+        }
+        return;
+      }
+
       document.getElementById('formView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
-    }, 1500);
+
+    } catch (e) {
+      btn.classList.remove('loading');
+      btnText.textContent = '🚀 Criar minha conta';
+      alert('Erro de conexão. Tente novamente.');
+    }
   });
 
   // Clear errors on input
