@@ -209,13 +209,13 @@
     <div class="sidebar-section-label">Conta</div>
     <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Configurações</a>
     <a class="nav-item" href="#"><span class="nav-icon">💳</span> Plano</a>
-    <a class="nav-item" href="login.html"><span class="nav-icon">🚪</span> Sair</a>
+    <a class="nav-item" href="#" onclick="logout()"><span class="nav-icon">🚪</span> Sair</a>
   </div>
   <div class="sidebar-footer">
     <div class="user-card">
-      <div class="avatar">LA</div>
+      <div class="avatar" id="sidebarAvatar">?</div>
       <div class="user-info">
-        <div class="user-name">Minha Conta</div>
+        <div class="user-name" id="sidebarUserName">Carregando...</div>
         <div class="user-plan">Plano Gratuito</div>
       </div>
     </div>
@@ -387,10 +387,31 @@
   const SUPABASE_KEY = 'sb_publishable_0lOYgHY250KjDSE45BKiVA_t3GiUIBE';
   const BASE_URL = 'https://linkafi.vercel.app';
 
+  // Recupera usuário logado
+  const token = localStorage.getItem('linkafi_token');
+  const userData = JSON.parse(localStorage.getItem('linkafi_user') || 'null');
+
+  // Redireciona se não estiver logado
+  if (!token || !userData) {
+    window.location.href = 'login.html';
+  }
+
+  const CURRENT_USER_ID = userData?.id || 'anonymous';
+  const CURRENT_USER_EMAIL = userData?.email || '';
+  const CURRENT_USER_NAME = userData?.user_metadata?.first_name || CURRENT_USER_EMAIL.split('@')[0] || 'Usuário';
+
+  // Atualiza nome na sidebar e topbar
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameEl = document.getElementById('sidebarUserName');
+    const subEl = document.getElementById('topbarSub');
+    if (nameEl) nameEl.textContent = CURRENT_USER_NAME;
+    if (subEl) subEl.textContent = `Bem-vindo, ${CURRENT_USER_NAME}`;
+  });
+
   let allLinks = [], allClicks = [], chart = null, currentFilter = 'todos';
 
   async function sb(path, options = {}) {
-    const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+    const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     if (options.method === 'POST') headers['Prefer'] = 'return=representation';
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...options, headers: { ...headers, ...options.headers } });
     if (!res.ok) throw await res.json();
@@ -410,7 +431,7 @@
   }
 
   async function loadLinks() {
-    const links = await sb('links?order=created_at.desc&select=*');
+    const links = await sb(`links?user_id=eq.${CURRENT_USER_ID}&order=created_at.desc&select=*`);
     allLinks = links || [];
     const active = allLinks.filter(l => l.active).length;
     document.getElementById('metricLinks').textContent = active;
@@ -572,7 +593,7 @@
       const res = await fetch(`${BASE_URL}/api/shorten`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ original_url: url, slug: slug || undefined, name: name || 'Sem nome', campaign: campaign || null, platform: platform || null, user_id: 'default' }),
+        body: JSON.stringify({ original_url: url, slug: slug || undefined, name: name || 'Sem nome', campaign: campaign || null, platform: platform || null, user_id: CURRENT_USER_ID }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -597,6 +618,18 @@
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  function logout() {
+    localStorage.removeItem('linkafi_token');
+    localStorage.removeItem('linkafi_user');
+    window.location.href = 'login.html';
+  }
+
+  // Inicializa nome e avatar na sidebar
+  const initials = CURRENT_USER_NAME.charAt(0).toUpperCase();
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarUserName').textContent = CURRENT_USER_NAME;
+  document.getElementById('topbarSub').textContent = `Bem-vindo, ${CURRENT_USER_NAME} 👋`;
 
   loadAll();
 </script>
